@@ -25,7 +25,7 @@ const ActivitySection = () => {
   useEffect(() => {
     let filtered = activities
 
-    // Apply search filter
+    // Apply search filterr
     if (searchTerm) {
       filtered = filtered.filter(activity =>
         activity.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
