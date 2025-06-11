@@ -63,6 +63,18 @@ const translations = {
     useOfficialId: 'Use your official 9-digit student ID provided by the university registrar.',
     demoCredentials: 'Demo Credentials',
     
+    // Registration
+    studentRegisterTitle: 'Student Registration',
+    studentRegisterSubtitle: 'Create your account to access university activities',
+    name: 'Full Name',
+    phone: 'Phone Number',
+    confirmPassword: 'Confirm Password',
+    registering: 'Registering...',
+    register: 'Register',
+    alreadyHaveAccount: 'Already have an account?',
+    importantInfo: 'Important Information',
+    registrationInfo: 'Please ensure all information is accurate. Your student ID must match your university records.',
+    
     // Student Dashboard
     welcomeBack: 'Welcome back',
     discoverActivities: 'Discover and participate in exciting activities across campus',
@@ -151,7 +163,7 @@ const translations = {
     address: 'Queen Alia Airport St 594, Amman.',
     portalLink: 'https://portal.zuj.edu.jo/',
     phoneNumber: '+(962) 6429 1511',
-    email: 'info@zuj.edu.jo',
+    email: 'Email',
     allRightsReserved: 'All Rights Reserved'
   },
   ar: {
@@ -205,6 +217,18 @@ const translations = {
     firstTimeUser: 'هل تستخدم المنصة لأول مرة؟',
     useOfficialId: 'استخدم رقم الطالب الرسمي المكون من 9 أرقام المقدم من مسجل الجامعة.',
     demoCredentials: 'بيانات تجريبية',
+    
+    // Registration
+    studentRegisterTitle: 'تسجيل الطالب',
+    studentRegisterSubtitle: 'أنشئ حسابك للوصول إلى أنشطة الجامعة',
+    name: 'الاسم الكامل',
+    phone: 'رقم الهاتف',
+    confirmPassword: 'تأكيد كلمة المرور',
+    registering: 'جاري التسجيل...',
+    register: 'تسجيل',
+    alreadyHaveAccount: 'هل لديك حساب بالفعل؟',
+    importantInfo: 'معلومات مهمة',
+    registrationInfo: 'يرجى التأكد من صحة جميع المعلومات. يجب أن يتطابق رقم الطالب مع سجلات الجامعة.',
     
     // Student Dashboard
     welcomeBack: 'مرحباً بعودتك',
@@ -294,7 +318,7 @@ const translations = {
     address: 'شارع مطار الملكة علياء 594، عمان.',
     portalLink: 'https://portal.zuj.edu.jo/',
     phoneNumber: '+(962) 6429 1511',
-    email: 'info@zuj.edu.jo',
+    email: 'الايميل',
     allRightsReserved: 'جميع الحقوق محفوظة'
   }
 }
