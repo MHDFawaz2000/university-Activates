@@ -71,10 +71,19 @@ src/
   "location": "string",
   "duration": "string",
   "image": "string (URL)",
-  "attendeeCount": "number",
-  "responses": {
-    "userId": "attend|not_attend|time_conflict"
-  }
+  "attendeeCount": "number"
+}
+```
+
+### ActivityResponse
+
+```json
+{
+  "id": "string",
+  "activityId": "string",
+  "userId": "string",
+  "responseType": "attend|not_attend|time_conflict",
+  "createdAt": "datetime"
 }
 ```
 
@@ -89,6 +98,72 @@ src/
   "upcoming": "number"
 }
 ```
+
+## Database Schema
+
+The following database tables are required for implementing the backend:
+
+### 1. users
+
+| Column     | Type         | Description                                |
+|------------|-------------|--------------------------------------------|
+| id         | UUID/String  | Primary key                                |
+| type       | String      | User type: 'student' or 'admin'            |
+| name       | String      | User's full name                           |
+| email      | String      | Email address (required for admins)        |
+| student_id | String      | 9-digit student ID (required for students) |
+| password   | String      | Hashed password (for admin users)          |
+| created_at | Timestamp   | Account creation timestamp                 |
+| updated_at | Timestamp   | Last update timestamp                      |
+
+### 2. activities
+
+| Column       | Type         | Description                             |
+|--------------|-------------|-----------------------------------------|
+| id           | UUID/String  | Primary key                             |
+| title        | String      | Activity title                          |
+| description  | Text        | Detailed description                    |
+| category     | String      | Category: Sports, Cultural, etc.        |
+| date         | Date        | Event date                              |
+| time         | Time        | Event start time                        |
+| location     | String      | Event location                          |
+| duration     | String      | Event duration                          |
+| image        | String      | URL to activity image                   |
+| created_by   | UUID/String  | Foreign key to users (admin)            |
+| created_at   | Timestamp   | Creation timestamp                      |
+| updated_at   | Timestamp   | Last update timestamp                   |
+
+### 3. activity_responses
+
+| Column        | Type         | Description                                      |
+|---------------|-------------|--------------------------------------------------|
+| id            | UUID/String  | Primary key                                      |
+| activity_id   | UUID/String  | Foreign key to activities                        |
+| user_id       | UUID/String  | Foreign key to users (student)                   |
+| response_type | String      | Response: 'attend', 'not_attend', 'time_conflict'|
+| created_at    | Timestamp   | Response timestamp                               |
+| updated_at    | Timestamp   | Last update timestamp                            |
+
+### 4. activity_categories
+
+| Column      | Type         | Description                             |
+|-------------|-------------|-----------------------------------------|
+| id          | UUID/String  | Primary key                             |
+| title       | String      | Category title                          |
+| description | Text        | Category description                    |
+| created_at  | Timestamp   | Creation timestamp                      |
+| updated_at  | Timestamp   | Last update timestamp                   |
+
+### 5. activity_analytics (Optional - for performance optimization)
+
+| Column           | Type         | Description                             |
+|------------------|-------------|-----------------------------------------|
+| id               | UUID/String  | Primary key                             |
+| activity_id      | UUID/String  | Foreign key to activities               |
+| attendee_count   | Integer     | Number of 'attend' responses            |
+| registration_count| Integer     | Total number of responses               |
+| completion_rate  | Float       | Percentage of attendees who completed   |
+| last_calculated  | Timestamp   | Last calculation timestamp              |
 
 ## API Requirements
 
@@ -163,19 +238,25 @@ The system uses two authentication flows:
 ### Technology Recommendations
 
 - **Node.js with Express** or equivalent backend framework
-- **MongoDB** or **PostgreSQL** for database
+- **MongoDB** or **PostgreSQL** for database (schema provided for relational databases)
 - **JWT** for authentication
 - **Multer** for image uploads
+- **Sequelize** or **TypeORM** for ORM if using SQL databases
+- **Mongoose** if using MongoDB
 
 ### Implementation Steps
 
-1. Set up database with schemas matching the data models
-2. Implement authentication endpoints with JWT
-3. Create RESTful API endpoints for activities
-4. Implement analytics data aggregation
-5. Add validation and error handling
-6. Implement image upload functionality
-7. Add language localization support for API responses (optional)
+1. Set up database with tables defined in the Database Schema section
+2. Create database relationships:
+   - One-to-many between users and activities (admin creates activities)
+   - One-to-many between users and activity_responses (students respond to activities)
+   - One-to-many between activities and activity_responses
+3. Implement authentication endpoints with JWT
+4. Create RESTful API endpoints for activities
+5. Implement analytics data aggregation
+6. Add validation and error handling
+7. Implement image upload functionality
+8. Add language localization support for API responses (optional)
 
 ### Security Considerations
 
