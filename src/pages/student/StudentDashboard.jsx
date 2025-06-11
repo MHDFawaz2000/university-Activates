@@ -1,0 +1,150 @@
+import { Link } from 'react-router-dom'
+import { useAuth } from '../../contexts/AuthContext'
+import { useLanguage } from '../../contexts/LanguageContext'
+import Header from '../../components/Header'
+import { Trophy, Palette, Microscope, Star, Calendar, Users, TrendingUp } from 'lucide-react'
+
+const StudentDashboard = () => {
+  const { user } = useAuth()
+  const { t, isRTL } = useLanguage()
+
+  const sections = [
+    {
+      id: 'sports',
+      title: t('sports'),
+      icon: Trophy,
+      color: 'bg-red-500',
+      bgColor: 'bg-red-50',
+      description: t('sportsDesc'),
+      count: 12,
+      upcoming: 3
+    },
+    {
+      id: 'cultural',
+      title: t('cultural'),
+      icon: Palette,
+      color: 'bg-purple-500',
+      bgColor: 'bg-purple-50',
+      description: t('culturalDesc'),
+      count: 8,
+      upcoming: 2
+    },
+    {
+      id: 'scientific',
+      title: t('scientific'),
+      icon: Microscope,
+      color: 'bg-blue-500',
+      bgColor: 'bg-blue-50',
+      description: t('scientificDesc'),
+      count: 6,
+      upcoming: 1
+    },
+    {
+      id: 'extracurricular',
+      title: t('extracurricular'),
+      icon: Star,
+      color: 'bg-green-500',
+      bgColor: 'bg-green-50',
+      description: t('extracurricularDesc'),
+      count: 15,
+      upcoming: 4
+    }
+  ]
+
+  const stats = [
+    { label: t('activitiesAttended'), value: '12', icon: Calendar },
+    { label: t('registeredEvents'), value: '8', icon: Users },
+    { label: t('pointsEarned'), value: '240', icon: TrendingUp }
+  ]
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-green-50 to-white">
+      <Header />
+      
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Welcome Section */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            {t('welcomeBack')}, {user?.name}!
+          </h1>
+          <p className="text-gray-600">
+            {t('discoverActivities')}
+          </p>
+        </div>
+
+        {/* Stats */}
+        <div className="grid md:grid-cols-3 gap-6 mb-12">
+          {stats.map((stat, index) => (
+            <div key={index} className="card p-6 border-2 border-green-100">
+              <div className="flex items-center">
+                <div className="bg-green-100 p-3 rounded-lg mr-4 rtl:ml-4 rtl:mr-0">
+                  <stat.icon className="h-6 w-6 text-green-600" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
+                  <p className="text-gray-600">{stat.label}</p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Activity Sections */}
+        <div className="mb-8">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">{t('activityCategories')}</h2>
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {sections.map((section) => (
+              <Link
+                key={section.id}
+                to={`/student/activities/${section.id}`}
+                className="card p-6 hover:scale-105 transition-all duration-300 group border-2 border-green-100 hover:border-green-300"
+              >
+                <div className={`${section.bgColor} p-4 rounded-xl mb-4 group-hover:scale-110 transition-transform duration-300`}>
+                  <section.icon className={`h-8 w-8 ${section.color.replace('bg-', 'text-')}`} />
+                </div>
+                
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">{section.title}</h3>
+                <p className="text-gray-600 text-sm mb-4 leading-relaxed">{section.description}</p>
+                
+                <div className="flex justify-between items-center text-sm">
+                  <span className="text-gray-500">{section.count} {t('activities')}</span>
+                  <span className="bg-green-100 text-green-700 px-2 py-1 rounded-full">
+                    {section.upcoming} {t('upcoming')}
+                  </span>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+
+        {/* Recent Activities */}
+        <div className="card p-6 border-2 border-green-100">
+          <h3 className="text-xl font-semibold text-gray-900 mb-4">{t('recentActivity')}</h3>
+          <div className="space-y-4">
+            {[
+              { activity: 'Basketball Tournament Finals', section: t('sports'), status: t('attended'), date: '2 days ago' },
+              { activity: 'Art Exhibition Opening', section: t('cultural'), status: t('registered'), date: '1 week ago' },
+              { activity: 'Research Symposium', section: t('scientific'), status: t('completed'), date: '2 weeks ago' }
+            ].map((item, index) => (
+              <div key={index} className="flex items-center justify-between py-3 border-b border-gray-200 last:border-0">
+                <div>
+                  <p className="font-medium text-gray-900">{item.activity}</p>
+                  <p className="text-sm text-gray-600">{item.section} • {item.date}</p>
+                </div>
+                <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                  item.status === t('attended') ? 'bg-green-100 text-green-700' :
+                  item.status === t('registered') ? 'bg-blue-100 text-blue-700' :
+                  'bg-gray-100 text-gray-700'
+                }`}>
+                  {item.status}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </main>
+    </div>
+  )
+}
+
+export default StudentDashboard
