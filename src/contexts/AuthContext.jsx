@@ -1,70 +1,106 @@
-import { createContext, useContext, useState, useEffect } from 'react'
+import { createContext, useContext, useState, useEffect } from "react";
+import { useLoginAdmin } from "../hooks/allHook";
+import { useAxiosInstance } from "../hooks/axiosInstance"; // ← تأكد من المسار الصحيح
 
-const AuthContext = createContext()
+const AuthContext = createContext();
 
 export const useAuth = () => {
-  const context = useContext(AuthContext)
+  const context = useContext(AuthContext);
   if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider')
+    throw new Error("useAuth must be used within an AuthProvider");
   }
-  return context
-}
+  return context;
+};
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null)
-  const [loading, setLoading] = useState(true)
+  const axiosInstance = useAxiosInstance();
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     // Check for existing session
-    const savedUser = localStorage.getItem('user')
+    const savedUser = localStorage.getItem("user");
     if (savedUser) {
-      setUser(JSON.parse(savedUser))
+      setUser(JSON.parse(savedUser));
     }
-    setLoading(false)
-  }, [])
+    setLoading(false);
+  }, []);
+
+  const registerStudent = async (formData) => {
+    try {
+      // Send registration data to the backend
+      const response = await axiosInstance.post('/api/auth/student/register', {
+        name: formData.name,
+        student_id: formData.studentId,
+        email: formData.email,
+        password: formData.password
+      });
+
+      // Get the response data
+      const { token, user } = response.data;
+
+      // Store token and user data
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(user));
+      
+      // Set authorization header
+      axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      
+      return response.data;
+    } catch (err) {
+      console.error("Registration error:", err);
+      throw new Error(err.response?.data?.error || "Registration failed");
+    }
+  };
 
   const loginStudent = (studentId) => {
     const userData = {
       id: studentId,
-      type: 'student',
-      name: `Student ${studentId.slice(-4)}`
-    }
-    setUser(userData)
-    localStorage.setItem('user', JSON.stringify(userData))
-    return Promise.resolve(userData)
-  }
+      type: "student",
+      name: `Student ${studentId.slice(-4)}`,
+    };
+    setUser(userData);
+    localStorage.setItem("user", JSON.stringify(userData));
+    return Promise.resolve(userData);
+  };
 
-  const loginAdmin = (email, password) => {
-    // Simple validation for demo
-    if (email === 'admin@university.edu' && password === 'admin123') {
-      const userData = {
-        id: email,
-        type: 'admin',
-        name: 'Administrator'
-      }
-      setUser(userData)
-      localStorage.setItem('user', JSON.stringify(userData))
-      return Promise.resolve(userData)
+  const { mutateAsync: loginAdminRequest } = useLoginAdmin();
+
+  const loginAdmin = async (email, password) => {
+    try {
+      const res = await loginAdminRequest({ email, password });
+      const { token, user } = res.data;
+
+      // حفظ التوكن والمستخدم
+      localStorage.setItem("token", token);
+      localStorage.setItem("user", JSON.stringify(user));
+      axiosInstance.defaults.headers.common[
+        "Authorization"
+      ] = `Bearer ${token}`;
+
+      setUser(user);
+      return user;
+    } catch (err) {
+      console.log("Login error:", err);
+      throw new Error(err.response?.data?.message || "Login failed");
     }
-    return Promise.reject(new Error('Invalid credentials'))
-  }
+  };
 
   const logout = () => {
-    setUser(null)
-    localStorage.removeItem('user')
-  }
+    setUser(null);
+    localStorage.removeItem("user");
+    localStorage.removeItem("token");
+    delete axiosInstance.defaults.headers.common["Authorization"];
+  };
 
   const value = {
     user,
     loginStudent,
     loginAdmin,
+    registerStudent,
     logout,
-    loading
-  }
+    loading,
+  };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  )
-}
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+};
