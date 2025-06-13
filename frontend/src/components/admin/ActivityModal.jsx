@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { X, Calendar, MapPin, Clock, Users } from "lucide-react";
+import { useAnalyticsBCategory } from "../../hooks/allHook";
 
 const ActivityModal = ({
   isOpen,
@@ -14,7 +15,7 @@ const ActivityModal = ({
   const [formData, setFormData] = useState({
     title: "",
     description: "",
-    category: "sports",
+    category: "",
     date: "",
     time: "",
     location: "",
@@ -23,12 +24,15 @@ const ActivityModal = ({
   });
   console.log("Activity Modal Data:", activity, mode, isSaving);
 
+  const { data: categoriesRaw } = useAnalyticsBCategory();
+  const categories = categoriesRaw?.data || [];
+
   useEffect(() => {
     if (activity && (mode === "edit" || mode === "view")) {
       setFormData({
         title: activity.title || "",
         description: activity.description || "",
-        category: activity.category.toLowerCase() || "Sports",
+        category: activity.category.toLowerCase() || "",
         date: activity.date ? activity.date.split("T")[0] : "",
         time: activity.time || "",
         location: activity.location || "",
@@ -39,7 +43,7 @@ const ActivityModal = ({
       setFormData({
         title: "",
         description: "",
-        category: "Sports",
+        category: "",
         date: "",
         time: "",
         location: "",
@@ -48,6 +52,7 @@ const ActivityModal = ({
       });
     }
   }, [activity, mode]);
+
 
   const handleChange = (e) => {
     setFormData({
@@ -60,8 +65,6 @@ const ActivityModal = ({
     e.preventDefault();
     onSave({
       ...formData,
-      category:
-        formData.category.charAt(0).toUpperCase() + formData.category.slice(1),
       time: formData.time.slice(0, 5), // "15:37:00" → "15:37"
     });
   };
@@ -141,10 +144,13 @@ const ActivityModal = ({
               disabled={isReadOnly}
               className="input-field focus:ring-green-500 focus:border-green-500"
             >
-              <option value="sports">{t("sports")}</option>
-              <option value="cultural">{t("cultural")}</option>
-              <option value="scientific">{t("scientific")}</option>
-              <option value="extracurricular">{t("extracurricular")}</option>
+              <option value=""></option>
+              {categories &&
+                categories?.map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {t(category.title.toLowerCase())}
+                  </option>
+                ))}
             </select>
           </div>
 

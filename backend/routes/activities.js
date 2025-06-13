@@ -8,35 +8,50 @@ const pool = require("../config/db");
 router.get("/", async (req, res) => {
   try {
     const { category, date, search } = req.query;
-    let query = "SELECT * FROM activities WHERE 1=1";
+
+    let query = `
+      SELECT 
+        a.*, 
+        ac.title AS category_title, 
+        ac.description AS category_description,
+        COUNT(CASE WHEN ar.response_type = 'attend' THEN 1 END) AS attendance_count
+      FROM activities a
+      LEFT JOIN activity_categories ac ON a.category = ac.id
+      LEFT JOIN activity_responses ar ON a.id = ar.activity_id
+      WHERE 1=1
+    `;
+
     const params = [];
     let paramCount = 1;
 
     if (category) {
-      query += ` AND category = $${paramCount}`;
+      query += ` AND a.category = $${paramCount}`;
       params.push(category);
       paramCount++;
     }
 
     if (date) {
-      query += ` AND date = $${paramCount}`;
+      query += ` AND a.date = $${paramCount}`;
       params.push(date);
       paramCount++;
     }
 
     if (search) {
-      query += ` AND (title ILIKE $${paramCount} OR description ILIKE $${paramCount})`;
+      query += ` AND (a.title ILIKE $${paramCount} OR a.description ILIKE $${paramCount})`;
       params.push(`%${search}%`);
       paramCount++;
     }
 
-    query += " ORDER BY date DESC, time ASC";
+    query += `
+      GROUP BY a.id, ac.title, ac.description
+      ORDER BY a.date DESC, a.time ASC
+    `;
+
     const result = await pool.query(query, params);
-    console.log(result.rows);
 
     res.json(result.rows);
   } catch (error) {
-    console.log("Error fetching activities:", error);
+    console.log("❌ Error fetching activities:", error.message);
     res.status(500).json({ error: "Server error" });
   }
 });

@@ -50,3 +50,39 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
+
+// const seedCategories = async () => {
+//   const categories = [
+//     { title: 'Sports', description: 'Sports-related activities' },
+//     { title: 'Cultural', description: 'Cultural programs and events' },
+//     { title: 'Scientific', description: 'Science and research activities' },
+//     { title: 'Extracurricular', description: 'Other student activities' }
+//   ];
+
+//   for (const { title, description } of categories) {
+//     const exists = await pool.query(
+//       'SELECT 1 FROM activity_categories WHERE title = $1',
+//       [title]
+//     );
+
+//     if (exists.rowCount === 0) {
+//       await pool.query(
+//         `INSERT INTO activity_categories (title, description)
+//          VALUES ($1, $2)`,
+//         [title, description]
+//       );
+//       console.log(`✅ Inserted category: ${title}`);
+//     } else {
+//       console.log(`ℹ️ Category already exists: ${title}`);
+//     }
+//   }
+
+//   console.log('🎉 Seeding categories done.');
+// };
+
+// seedCategories()
+//   .then(() => process.exit(0))
+//   .catch((err) => {
+//     console.error('❌ Error during seeding:', err.message);
+//     process.exit(1);
+//   });

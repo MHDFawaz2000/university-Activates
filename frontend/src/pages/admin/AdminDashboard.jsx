@@ -18,6 +18,7 @@ const AdminDashboard = () => {
   const { data: overview } = useAnalyticsOverview();
   const { data: recentRegistrations } = useRecentRegistrations();
   const { data: popularActivities } = usePopularActivities();
+  console.log("Admin Dashboard Data:", popularActivities);
 
   const tabs = [
     { id: "overview", label: t("overview"), icon: BarChart3 },
@@ -152,7 +153,14 @@ const AdminDashboard = () => {
                         </p>
                       </div>
                       <span className="text-sm text-gray-500">
-                        {new Date(item?.time)?.toLocaleString()}
+                        {new Date(item?.time).toLocaleString("en-US", { // إذا باللغة العربية "ar-EG"
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                          hour12: true,
+                        })}
                       </span>
                     </div>
                   ))}
@@ -171,10 +179,10 @@ const AdminDashboard = () => {
                     >
                       <div>
                         <p className="font-medium text-gray-900">
-                          {item?.name}
+                          {item?.title}
                         </p>
                         <p className="text-sm text-gray-600">
-                          {item?.category?.toLowerCase()}
+                          {t(item?.category_title?.toLowerCase())}
                         </p>
                       </div>
                       <div className="flex items-center space-x-2 rtl:space-x-reverse">

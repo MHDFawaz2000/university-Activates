@@ -35,6 +35,7 @@ const AnalyticsDashboard = () => {
     const sign = diff >= 0 ? "+" : "";
     return `${sign}${diff.toFixed(1)}%`;
   };
+console.log("Monthly Data:", overview);
 
   const stats = [
     {
