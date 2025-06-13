@@ -33,7 +33,6 @@ app.use(express.json());
 app.use("/api/auth", require("./routes/auth"));
 app.use("/api/activities", require("./routes/activities"));
 app.use("/api/analytics", require("./routes/analytics"));
-// app.use("/api/auth", require("./routes/auth"));
 
 // Error handling middleware
 app.use((err, req, res, next) => {
