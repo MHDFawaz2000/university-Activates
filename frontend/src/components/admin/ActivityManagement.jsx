@@ -4,6 +4,7 @@ import { Plus, Edit, Trash2, Eye, Search, Filter } from "lucide-react";
 import ActivityModal from "./ActivityModal";
 import {
   useAllActivities,
+  useAnalyticsBCategory,
   useCreateActivity,
   useDeleteActivity,
   useUpdateActivity,
@@ -26,15 +27,18 @@ const ActivityManagement = () => {
     category: selectedCategory === "all" ? undefined : selectedCategory,
     search: searchTerm || [],
   });
-  console.log("Activities Data:", activities);
 
-  const categories = [
-    "all",
-    "sports",
-    "cultural",
-    "scientific",
-    "extracurricular",
-  ];
+  const { data: categoriesRaw } = useAnalyticsBCategory();
+  const categories = categoriesRaw?.data || [];
+  console.log("categories Data:", categories);
+
+  // const categoriesData = [
+  //   "all",
+  //   "sports",
+  //   "cultural",
+  //   "scientific",
+  //   "extracurricular",
+  // ];
 
   const filteredActivities = (activities?.data || [])?.filter((activity) => {
     const matchesSearch =
@@ -45,6 +49,8 @@ const ActivityManagement = () => {
       activity?.category?.toLowerCase() === selectedCategory;
     return matchesSearch && matchesCategory;
   });
+
+  console.log("Filtered Activities:", filteredActivities);
 
   const handleCreateActivity = () => {
     setSelectedActivity(null);
@@ -144,11 +150,12 @@ const ActivityManagement = () => {
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
             >
-              {categories.map((category) => (
-                <option key={category} value={category}>
-                  {getCategoryName(category)}
-                </option>
-              ))}
+              {categories &&
+                categories?.map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {t(category.title.toLowerCase())}
+                  </option>
+                ))}
             </select>
           </div>
         </div>
@@ -223,7 +230,7 @@ const ActivityManagement = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
-                        {activity?.category}
+                        {t(activity?.category_title.toLowerCase())}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
@@ -231,7 +238,7 @@ const ActivityManagement = () => {
                       {activity?.time?.slice(0, 5)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {activity?.attendeeCount}
+                      {activity?.attendance_count ?? 0}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2 rtl:space-x-reverse">
                       <button

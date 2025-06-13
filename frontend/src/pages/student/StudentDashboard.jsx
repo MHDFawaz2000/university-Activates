@@ -23,6 +23,7 @@ const StudentDashboard = () => {
   const { data: statsData } = useStudentStats();
   const { data: categoryStats, isLoading: categoryLoading } =
     useCategoryStats();
+
   const { data: recentActivities, isLoading: recentLoading } =
     useRecentStudentActivities();
 
@@ -41,15 +42,35 @@ const StudentDashboard = () => {
   };
 
   const sections =
-    categoryStats?.map((category) => ({
-      id: category.id,
-      title: t(category.id),
-      icon: categoryIcons[category.id],
-      ...categoryColors[category.id],
-      description: t(`${category.id}Desc`),
-      count: category.count,
-      upcoming: category.upcoming,
-    })) || [];
+    categoryStats?.map((category) => {
+      const matchingRecent = recentActivities?.find(
+        (ra) =>
+          ra.section.toLowerCase() === "cultural" ||
+          ra.section.toLowerCase() === category.title?.toLowerCase()
+      );
+
+      const id = category.title?.toLowerCase();
+      const defaultColors = {
+        color: "bg-gray-500",
+        bgColor: "bg-gray-100",
+      };
+      const colors = categoryColors[id] || defaultColors;
+      const Icon = categoryIcons[id] || Star;
+
+      return {
+        id: category.id,
+        title: matchingRecent?.section || t(id),
+        icon: Icon,
+        ...colors,
+        title2: matchingRecent?.activity || t(id),
+        description: matchingRecent?.description || t(`${id}Desc`),
+        image: matchingRecent?.image,
+        count: category.count,
+        upcoming: category.upcoming,
+      };
+    }) || [];
+
+  console.log("Category Stats Data:", sections);
 
   const stats = [
     {
@@ -107,60 +128,55 @@ const StudentDashboard = () => {
             {t("activityCategories")}
           </h2>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {categoryLoading
-              ? // Loading skeleton for categories
-                Array(4)
-                  .fill(0)
-                  .map((_, index) => (
-                    <div
-                      key={index}
-                      className="card p-6 border-2 border-green-100 animate-pulse"
-                    >
-                      <div className="bg-gray-100 p-4 rounded-xl mb-4">
-                        <div className="h-8 w-8 bg-gray-200 rounded"></div>
-                      </div>
-                      <div className="h-6 w-24 bg-gray-200 rounded mb-2"></div>
-                      <div className="h-4 w-full bg-gray-200 rounded mb-4"></div>
-                      <div className="flex justify-between items-center">
-                        <div className="h-4 w-16 bg-gray-200 rounded"></div>
-                        <div className="h-4 w-20 bg-gray-200 rounded"></div>
-                      </div>
-                    </div>
-                  ))
-              : sections.map((section) => (
-                  <Link
-                    key={section.id}
-                    to={`/student/activities/${section.id}`}
-                    className="card p-6 hover:scale-105 transition-all duration-300 group border-2 border-green-100 hover:border-green-300"
+            {sections.map((section) => {
+              const Icon = section.icon;
+              return (
+                <Link
+                  key={section.id}
+                  to={`/student/activities/${section.id}`}
+                  className="card p-6 hover:scale-105 transition-all duration-300 group border-2 border-green-100 hover:border-green-300"
+                >
+                  <div
+                    className={`${section.bgColor} p-4 rounded-xl mb-4 group-hover:scale-110 transition-transform duration-300`}
                   >
-                    <div
-                      className={`${section.bgColor} p-4 rounded-xl mb-4 group-hover:scale-110 transition-transform duration-300`}
-                    >
-                      <section.icon
-                        className={`h-8 w-8 ${section.color.replace(
-                          "bg-",
-                          "text-"
-                        )}`}
-                      />
-                    </div>
+                    <Icon
+                      className={`h-8 w-8 ${
+                        section.color
+                          ? section.color.replace("bg-", "text-")
+                          : "text-gray-400"
+                      }`}
+                    />
+                  </div>
 
-                    <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                      {section.title}
-                    </h3>
-                    <p className="text-gray-600 text-sm mb-4 leading-relaxed">
-                      {section.description}
-                    </p>
+                  {section.image && (
+                    <img
+                      src={section.image}
+                      alt={section.title}
+                      className="rounded mb-3 w-full h-32 object-cover"
+                    />
+                  )}
 
-                    <div className="flex justify-between items-center text-sm">
-                      <span className="text-gray-500">
-                        {section.count} {t("activities")}
-                      </span>
-                      <span className="bg-green-100 text-green-700 px-2 py-1 rounded-full">
-                        {section.upcoming} {t("upcoming")}
-                      </span>
-                    </div>
-                  </Link>
-                ))}
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                    {t(section.title.toLowerCase())}
+                  </h3>
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                    {section.title2}
+                  </h3>
+                  <p className="text-gray-600 text-sm mb-4 leading-relaxed">
+                    {section.description}
+                  </p>
+
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-gray-500">
+                      {section.count} {t("activities")}
+                    </span>
+                    <span className="bg-green-100 text-green-700 px-2 py-1 rounded-full">
+                      {t(section.upcoming)}
+                    </span>
+                  </div>
+                </Link>
+              );
+            })}
           </div>
         </div>
 
@@ -187,7 +203,7 @@ const StudentDashboard = () => {
                   </div>
                 ))
             ) : recentActivities?.length > 0 ? (
-              recentActivities.map((item, index) => (
+              recentActivities?.map((item, index) => (
                 <div
                   key={index}
                   className="flex items-center justify-between py-3 border-b border-gray-200 last:border-0"
@@ -195,7 +211,7 @@ const StudentDashboard = () => {
                   <div>
                     <p className="font-medium text-gray-900">{item.activity}</p>
                     <p className="text-sm text-gray-600">
-                      {t(item.section)} • {item.date}
+                      {t(item.section.toLowerCase())} • {item.date}
                     </p>
                   </div>
                   <span

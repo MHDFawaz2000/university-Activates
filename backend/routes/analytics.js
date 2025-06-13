@@ -121,20 +121,23 @@ router.get("/popular-activities", async (req, res) => {
   try {
     const result = await pool.query(`
       SELECT 
-        a.title AS name,
-        a.category,
+        a.title,
+        ac.title AS category_title,
+        ac.description AS category_description,
         COUNT(ar.id) AS registrations
       FROM activities a
       LEFT JOIN activity_responses ar ON a.id = ar.activity_id
-      GROUP BY a.id
+      LEFT JOIN activity_categories ac ON a.category = ac.id
+      GROUP BY a.id, ac.title, ac.description
       ORDER BY registrations DESC
       LIMIT 5
     `);
 
     const popular = result.rows.map((row) => ({
-      name: row.name,
+      title: row.title,
       registrations: parseInt(row.registrations, 10),
-      category: row.category,
+      category_title: row.category_title,
+      category_description: row.category_description,
     }));
 
     res.json({ data: popular });
@@ -211,8 +214,9 @@ router.get("/top-activities", async (req, res) => {
 router.get("/student-stats", auth, async (req, res) => {
   try {
     const userId = req.user.id;
-    
-    const result = await pool.query(`
+
+    const result = await pool.query(
+      `
       SELECT 
         COUNT(DISTINCT CASE WHEN ar.response_type = 'attend' THEN ar.activity_id END) as activities_attended,
         COUNT(DISTINCT CASE WHEN ar.response_type = 'register' THEN ar.activity_id END) as registered_events,
@@ -220,7 +224,9 @@ router.get("/student-stats", auth, async (req, res) => {
       FROM activity_responses ar
       LEFT JOIN activities a ON ar.activity_id = a.id
       WHERE ar.user_id = $1
-    `, [userId]);
+    `,
+      [userId]
+    );
 
     res.json(result.rows[0]);
   } catch (error) {
@@ -245,13 +251,13 @@ router.get("/category-stats", auth, async (req, res) => {
     `);
 
     // Transform the data to match the frontend format
-    const categoryStats = result.rows.map(row => ({
+    const categoryStats = result.rows.map((row) => ({
       id: row.category.toLowerCase(),
       title: row.category,
       count: parseInt(row.total_activities),
       upcoming: parseInt(row.upcoming_activities),
       registered: parseInt(row.registered_activities),
-      attended: parseInt(row.attended_activities)
+      attended: parseInt(row.attended_activities),
     }));
 
     res.json(categoryStats);
@@ -265,11 +271,14 @@ router.get("/category-stats", auth, async (req, res) => {
 router.get("/recent-student-activities", auth, async (req, res) => {
   try {
     const userId = req.user.id;
-    
-    const result = await pool.query(`
+
+    const result = await pool.query(
+      `
       SELECT 
         a.title as activity,
-        a.category,
+        ac.title as section,
+        a.image,
+        a.description,
         ar.response_type as status,
         ar.created_at,
         CASE 
@@ -280,21 +289,26 @@ router.get("/recent-student-activities", auth, async (req, res) => {
         END as time_ago
       FROM activity_responses ar
       JOIN activities a ON ar.activity_id = a.id
+      JOIN activity_categories ac ON a.category = ac.id
       WHERE ar.user_id = $1
       ORDER BY ar.created_at DESC
       LIMIT 5
-    `, [userId]);
+    `,
+      [userId]
+    );
 
-    const activities = result.rows.map(row => ({
+    const activities = result.rows.map((row) => ({
       activity: row.activity,
-      section: row.category,
+      section: row.section,
       status: row.status,
-      date: row.time_ago
+      image: row.image,
+      description: row.description,
+      date: row.time_ago,
     }));
 
     res.json(activities);
   } catch (error) {
-    console.error("❌ Error in recent-student-activities:", error.message);
+    console.error("❌ Error in recent-student-activities:", error);
     res.status(500).json({ error: "Server error" });
   }
 });

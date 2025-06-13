@@ -30,7 +30,7 @@ const ActivityCard = ({ activity, onResponse, userResponse }) => {
     },
     {
       id: "not_attend",
-      label: t("willNotAttend"),
+      label: t("not_attend"),
       icon: XCircle,
       className: "bg-red-600 hover:bg-red-700 text-white",
     },
@@ -47,7 +47,7 @@ const ActivityCard = ({ activity, onResponse, userResponse }) => {
       case "attend":
         return t("willAttend");
       case "not_attend":
-        return t("willNotAttend");
+        return t("not_attend");
       case "time_conflict":
         return t("timeNotConvenient");
       default:

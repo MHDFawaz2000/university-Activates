@@ -149,7 +149,7 @@ const translations = {
     
     // Activity Card
     willAttend: 'I will attend',
-    willNotAttend: 'I will not attend',
+    not_attend: 'I will not attend',
     timeNotConvenient: 'Time not convenient',
     attending: 'attending',
     yourResponse: 'Your response',
@@ -304,7 +304,7 @@ const translations = {
     
     // Activity Card
     willAttend: 'سأحضر',
-    willNotAttend: 'لن أحضر',
+    not_attend: 'لن أحضر',
     timeNotConvenient: 'الوقت غير مناسب',
     attending: 'حاضر',
     yourResponse: 'ردك',

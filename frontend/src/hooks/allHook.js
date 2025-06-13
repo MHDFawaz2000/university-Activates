@@ -180,6 +180,15 @@ export const useAnalyticsByCategory = () => {
   });
 };
 
+export const useAnalyticsBCategory = () => {
+  const axiosInstance = useAxiosInstance();
+
+  return useQuery({
+    queryKey: ["analytics", "categories"],
+    queryFn: () => axiosInstance.get("/activities/categories"),
+  });
+};
+
 // Custom hook for handling loading and error states
 export const usState = (queryResult) => {
   const axiosInstance = useAxiosInstance();
