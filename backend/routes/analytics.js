@@ -1,10 +1,10 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const { auth, adminOnly } = require('../middlewares/auth');
-const pool = require('../config/db');
+const { auth, adminOnly } = require("../middlewares/auth");
+const pool = require("../config/db");
 
 // Get overview statistics
-router.get('/overview', auth, adminOnly, async (req, res) => {
+router.get("/overview", auth, adminOnly, async (req, res) => {
   try {
     const result = await pool.query(`
       SELECT 
@@ -18,12 +18,12 @@ router.get('/overview', auth, adminOnly, async (req, res) => {
     `);
     res.json(result.rows[0]);
   } catch (error) {
-    res.status(500).json({ error: 'Server error' });
+    res.status(500).json({ error: "Server error" });
   }
 });
 
 // Get monthly statistics
-router.get('/monthly', auth, adminOnly, async (req, res) => {
+router.get("/monthly", auth, adminOnly, async (req, res) => {
   try {
     const result = await pool.query(`
       SELECT 
@@ -39,12 +39,12 @@ router.get('/monthly', auth, adminOnly, async (req, res) => {
     `);
     res.json(result.rows);
   } catch (error) {
-    res.status(500).json({ error: 'Server error' });
+    res.status(500).json({ error: "Server error" });
   }
 });
 
 // Get category distribution
-router.get('/categories', auth, adminOnly, async (req, res) => {
+router.get("/categories", auth, adminOnly, async (req, res) => {
   try {
     const result = await pool.query(`
       SELECT 
@@ -61,12 +61,12 @@ router.get('/categories', auth, adminOnly, async (req, res) => {
     `);
     res.json(result.rows);
   } catch (error) {
-    res.status(500).json({ error: 'Server error' });
+    res.status(500).json({ error: "Server error" });
   }
 });
 
 // Get top performing activities
-router.get('/top-activities', auth, adminOnly, async (req, res) => {
+router.get("/top-activities", auth, adminOnly, async (req, res) => {
   try {
     const result = await pool.query(`
       SELECT 
@@ -84,8 +84,219 @@ router.get('/top-activities', auth, adminOnly, async (req, res) => {
     `);
     res.json(result.rows);
   } catch (error) {
-    res.status(500).json({ error: 'Server error' });
+    res.status(500).json({ error: "Server error" });
   }
 });
 
-module.exports = router; 
+router.get("/recent-registrations", async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT
+        ar.user_id,
+        u.name AS student_name,
+        a.title AS activity_title,
+        ar.created_at
+      FROM activity_responses ar
+      JOIN users u ON u.id = ar.user_id
+      JOIN activities a ON a.id = ar.activity_id
+      WHERE u.type = 'student'
+      ORDER BY ar.created_at DESC
+      LIMIT 5
+    `);
+
+    const recent = result.rows.map((row) => ({
+      student: row.student_name,
+      activity: row.activity_title,
+      time: row.created_at,
+    }));
+
+    res.json({ data: recent });
+  } catch (error) {
+    console.error("❌ Error in recent-registrations:", error.message);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+router.get("/popular-activities", async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT 
+        a.title AS name,
+        a.category,
+        COUNT(ar.id) AS registrations
+      FROM activities a
+      LEFT JOIN activity_responses ar ON a.id = ar.activity_id
+      GROUP BY a.id
+      ORDER BY registrations DESC
+      LIMIT 5
+    `);
+
+    const popular = result.rows.map((row) => ({
+      name: row.name,
+      registrations: parseInt(row.registrations, 10),
+      category: row.category,
+    }));
+
+    res.json({ data: popular });
+  } catch (error) {
+    console.error("❌ Error in popular-activities:", error.message);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+// GET /analytics/monthly
+router.get("/monthly", async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT 
+        TO_CHAR(date, 'Mon') AS month,
+        COUNT(DISTINCT user_id) AS registrations,
+        COUNT(DISTINCT id) AS activities
+      FROM activity_responses
+      JOIN activities ON activity_responses.activity_id = activities.id
+      GROUP BY TO_CHAR(date, 'Mon'), EXTRACT(MONTH FROM date)
+      ORDER BY EXTRACT(MONTH FROM date)
+    `);
+
+    res.json(result.rows);
+  } catch (err) {
+    console.log("❌ Error in monthly analytics:", err.message);
+    res.status(500).json({ error: "Failed to fetch monthly data" });
+  }
+});
+
+// GET /analytics/category-distribution
+router.get("/category-distribution", async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT 
+        category AS name,
+        COUNT(*) AS value,
+        SUM((SELECT COUNT(*) FROM activity_responses WHERE activity_id = a.id)) AS registrations
+      FROM activities a
+      GROUP BY category
+    `);
+
+    res.json(result.rows);
+  } catch (err) {
+    console.log("❌ Error in category-distribution:", err.message);
+    res.status(500).json({ error: "Failed to fetch category distribution" });
+  }
+});
+
+// GET /analytics/top-activities
+router.get("/top-activities", async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT a.title AS name,
+             COUNT(ar.id) AS registrations,
+             ROUND(
+               100.0 * COUNT(ar.attended) FILTER (WHERE ar.attended = true) / NULLIF(COUNT(ar.id), 0)
+             ) AS completion
+      FROM activities a
+      LEFT JOIN activity_responses ar ON ar.activity_id = a.id
+      GROUP BY a.id
+      ORDER BY registrations DESC
+      LIMIT 5
+    `);
+
+    res.json(result.rows);
+  } catch (err) {
+    console.log("❌ Error in top-activities:", err.message);
+    res.status(500).json({ error: "Failed to fetch top activities" });
+  }
+});
+
+// Get student statistics
+router.get("/student-stats", auth, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    
+    const result = await pool.query(`
+      SELECT 
+        COUNT(DISTINCT CASE WHEN ar.response_type = 'attend' THEN ar.activity_id END) as activities_attended,
+        COUNT(DISTINCT CASE WHEN ar.response_type = 'register' THEN ar.activity_id END) as registered_events,
+        COALESCE(SUM(CASE WHEN ar.response_type = 'attend' THEN a.points ELSE 0 END), 0) as points_earned
+      FROM activity_responses ar
+      LEFT JOIN activities a ON ar.activity_id = a.id
+      WHERE ar.user_id = $1
+    `, [userId]);
+
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error("❌ Error in student-stats:", error.message);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+// Get activity statistics by category
+router.get("/category-stats", auth, async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT 
+        a.category,
+        COUNT(DISTINCT a.id) as total_activities,
+        COUNT(DISTINCT CASE WHEN ar.response_type = 'register' THEN ar.activity_id END) as registered_activities,
+        COUNT(DISTINCT CASE WHEN ar.response_type = 'attend' THEN ar.activity_id END) as attended_activities,
+        COUNT(DISTINCT CASE WHEN a.date > CURRENT_DATE THEN a.id END) as upcoming_activities
+      FROM activities a
+      LEFT JOIN activity_responses ar ON a.id = ar.activity_id
+      GROUP BY a.category
+    `);
+
+    // Transform the data to match the frontend format
+    const categoryStats = result.rows.map(row => ({
+      id: row.category.toLowerCase(),
+      title: row.category,
+      count: parseInt(row.total_activities),
+      upcoming: parseInt(row.upcoming_activities),
+      registered: parseInt(row.registered_activities),
+      attended: parseInt(row.attended_activities)
+    }));
+
+    res.json(categoryStats);
+  } catch (error) {
+    console.error("❌ Error in category-stats:", error.message);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+// Get recent student activities
+router.get("/recent-student-activities", auth, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    
+    const result = await pool.query(`
+      SELECT 
+        a.title as activity,
+        a.category,
+        ar.response_type as status,
+        ar.created_at,
+        CASE 
+          WHEN ar.created_at > NOW() - INTERVAL '1 day' THEN '1 day ago'
+          WHEN ar.created_at > NOW() - INTERVAL '7 days' THEN '1 week ago'
+          WHEN ar.created_at > NOW() - INTERVAL '14 days' THEN '2 weeks ago'
+          ELSE TO_CHAR(ar.created_at, 'DD/MM/YYYY')
+        END as time_ago
+      FROM activity_responses ar
+      JOIN activities a ON ar.activity_id = a.id
+      WHERE ar.user_id = $1
+      ORDER BY ar.created_at DESC
+      LIMIT 5
+    `, [userId]);
+
+    const activities = result.rows.map(row => ({
+      activity: row.activity,
+      section: row.category,
+      status: row.status,
+      date: row.time_ago
+    }));
+
+    res.json(activities);
+  } catch (error) {
+    console.error("❌ Error in recent-student-activities:", error.message);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+module.exports = router;
