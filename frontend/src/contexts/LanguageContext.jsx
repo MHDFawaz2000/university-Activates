@@ -164,9 +164,11 @@ const translations = {
     portalLink: 'https://portal.zuj.edu.jo/',
     phoneNumber: '+(962) 6429 1511',
     email: 'Email',
-    allRightsReserved: 'All Rights Reserved'
+    allRightsReserved: 'All Rights Reserved',
+    noRecentActivities: 'No recent activities found',
   },
   ar: {
+    noRecentActivities: 'لا توجد أنشطة حديثة',
     // Navigation & Common
     home: 'الرئيسية',
     login: 'تسجيل الدخول',

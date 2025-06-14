@@ -240,24 +240,27 @@ router.get("/category-stats", auth, async (req, res) => {
   try {
     const result = await pool.query(`
       SELECT 
-        a.category,
+        ac.id,
+        ac.title,
+        ac.description,
         COUNT(DISTINCT a.id) as total_activities,
         COUNT(DISTINCT CASE WHEN ar.response_type = 'register' THEN ar.activity_id END) as registered_activities,
         COUNT(DISTINCT CASE WHEN ar.response_type = 'attend' THEN ar.activity_id END) as attended_activities,
         COUNT(DISTINCT CASE WHEN a.date > CURRENT_DATE THEN a.id END) as upcoming_activities
-      FROM activities a
+      FROM activity_categories ac
+      LEFT JOIN activities a ON a.category = ac.id
       LEFT JOIN activity_responses ar ON a.id = ar.activity_id
-      GROUP BY a.category
+      GROUP BY ac.id, ac.title, ac.description
     `);
 
-    // Transform the data to match the frontend format
     const categoryStats = result.rows.map((row) => ({
-      id: row.category.toLowerCase(),
-      title: row.category,
+      id: row.title?.toLowerCase(), // ← لتحطيم المفتاح مع الـ icons والألوان
+      title: row.title,
+      description: row.description,
       count: parseInt(row.total_activities),
-      upcoming: parseInt(row.upcoming_activities),
       registered: parseInt(row.registered_activities),
       attended: parseInt(row.attended_activities),
+      upcoming: parseInt(row.upcoming_activities),
     }));
 
     res.json(categoryStats);
