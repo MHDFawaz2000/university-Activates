@@ -26,6 +26,7 @@ const StudentDashboard = () => {
 
   const { data: recentActivities, isLoading: recentLoading } =
     useRecentStudentActivities();
+  console.log("Recent Activities Data:", recentActivities);
 
   const categoryIcons = {
     sports: Trophy,
